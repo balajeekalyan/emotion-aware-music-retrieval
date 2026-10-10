@@ -1,0 +1,37 @@
+{
+  "upload_type": "software",
+  "title": "Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Modal Coherence (code)",
+  "description": "<p>Code for the paper <em>Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Modal Coherence</em> (PeerJ Computer Science, under review).</p><p>Given a query track, the code ranks a catalog of 2,075 tracks from the MERGE dataset using content alone: audio embeddings (MuQ, MERT, CLAP, handcrafted), lyric embeddings (SBERT and others), or a fusion of the two. Retrieval is scored against the tracks' arousal&ndash;valence annotations. Per-track audio&ndash;lyrics coherence is measured with cross-fitted ridge probes and bootstrap intervals.</p><p>The repository contains the analysis notebooks, a memory-bounded audio-encoder extraction script, a headless notebook runner and a script that downloads the released outputs (embeddings, per-query results, tables, figures) from Zenodo. The MERGE dataset (CC BY-NC 4.0) is not included; download it from Zenodo (DOI 10.5281/zenodo.13939205).</p>",
+  "creators": [
+    {
+      "name": "Kalyanasundaram, Balajee"
+    }
+  ],
+  "license": "MIT",
+  "access_right": "open",
+  "language": "eng",
+  "keywords": [
+    "music information retrieval",
+    "music emotion recognition",
+    "cross-modal retrieval",
+    "lyrics",
+    "audio embeddings",
+    "arousal-valence",
+    "MERGE dataset"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.5281/zenodo.13939205",
+      "relation": "requires",
+      "resource_type": "dataset",
+      "scheme": "doi"
+    },
+    {
+      "identifier": "10.1109/TAFFC.2026.3668037",
+      "relation": "references",
+      "resource_type": "publication-article",
+      "scheme": "doi"
+    }
+  ],
+  "notes": "The code is MIT-licensed. The MERGE dataset and the derived outputs are licensed CC BY-NC 4.0. If you use this code, please also cite the MERGE dataset and its paper."
+}

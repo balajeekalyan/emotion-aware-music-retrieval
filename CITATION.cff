@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the paper and the MERGE dataset."
+title: "Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Modal Coherence (code)"
+type: software
+license: MIT
+version: "2.0"
+date-released: "2026-10-07"   # update to the release date
+authors:
+  - family-names: Kalyanasundaram
+    given-names: Balajee
+repository-code: "https://github.com/balajeekalyan/emotion-aware-music-retrieval"
+keywords:
+  - music information retrieval
+  - music emotion recognition
+  - cross-modal retrieval
+  - lyrics
+  - audio embeddings
+references:
+  - type: dataset
+    title: "MERGE dataset (version 1.1)"
+    authors:
+      - family-names: Louro
+        given-names: P. L.
+      - family-names: Redinho
+        given-names: H.
+      - family-names: Santos
+        given-names: R.
+      - family-names: Malheiro
+        given-names: R.
+      - family-names: Panda
+        given-names: R.
+      - family-names: Paiva
+        given-names: R. P.
+    year: 2024
+    publisher:
+      name: Zenodo
+    doi: "10.5281/zenodo.13939205"

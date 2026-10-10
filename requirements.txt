@@ -1,0 +1,42 @@
+# Versions used to produce the results in the paper (Python 3.12.10, Windows 11, CPU).
+
+numpy==1.26.4
+pandas==2.2.3
+pyarrow==23.0.1
+scipy==1.14.1
+scikit-learn==1.8.0
+statsmodels==0.14.5
+matplotlib==3.9.2
+seaborn==0.13.2
+tqdm==4.67.1
+
+# Audio
+librosa==0.10.2.post1
+soundfile==0.13.1
+torch==2.10.0
+torchaudio==2.11.0
+transformers==4.57.6
+huggingface_hub==0.36.2
+muq==0.1.0           # OpenMuQ/MuQ-large-msd-iter
+nnaudio==0.3.4       # MuQ dependency
+x-clip==0.14.4       # MuQ dependency
+einops==0.8.2
+easydict==1.13
+
+# Lyrics
+sentence-transformers==5.2.2
+nltk==3.9.4          # then: python -m nltk.downloader vader_lexicon punkt
+NRCLex==4.1.0
+bertopic==0.17.4
+umap-learn==0.5.12
+hdbscan==0.8.42
+
+# Retrieval (v1 notebooks only)
+faiss-cpu==1.13.2
+
+# Running notebooks and building the supplement
+nbclient==0.10.2
+nbformat==5.10.4
+ipykernel==6.29.5
+python-docx==1.2.0
+requests==2.32.3
