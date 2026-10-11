@@ -4,7 +4,7 @@ title: "Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Moda
 type: software
 license: MIT
 version: "2.0"
-date-released: "2026-10-07"   # update to the release date
+date-released: "2026-10-10"   # update to the release date
 authors:
   - family-names: Kalyanasundaram
     given-names: Balajee

@@ -2,12 +2,16 @@
 
     python download_data.py --record <ZENODO_RECORD_ID>      # e.g. the number in zenodo.org/records/<id>
     python download_data.py --zip path/to/merge_emotion_retrieval_outputs_v2.zip   # already downloaded
+    python download_data.py --zip path/to/merge_emotion_retrieval_outputs_v2.zip.001   # parts, joined first
 
-Existing files in outputs/ are not overwritten unless --force is given.
+The Zenodo record holds the zip as ~25 MB parts (<zip>.001, <zip>.002, ...); they are checked and joined into the zip
+before it is unpacked. Existing files in outputs/ are not overwritten unless --force is given.
 """
 import argparse
+import glob
 import hashlib
 import os
+import re
 import sys
 import zipfile
 
@@ -16,7 +20,7 @@ import requests
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ZIP_NAME = 'merge_emotion_retrieval_outputs_v2.zip'
 SUMS_NAME = 'SHA256SUMS.txt'
-ZENODO_RECORD = None   # set after publishing, so `python download_data.py` works without --record
+ZENODO_RECORD = '23275462'   # DOI 10.5281/zenodo.23275462; --record overrides it
 
 
 def sha256(path):
@@ -42,11 +46,31 @@ def download(url, dest):
     os.replace(dest + '.part', dest)
 
 
+def is_part(name):
+    return name.startswith(ZIP_NAME + '.') and re.fullmatch(r'\d{3}', name[len(ZIP_NAME) + 1:]) is not None
+
+
+def join_parts(parts, zpath, sums):
+    """Check each part against SHA256SUMS (when listed) and concatenate them, in order, into zpath."""
+    for p in parts:
+        name = os.path.basename(p)
+        if name in sums and sha256(p) != sums[name]:
+            sys.exit(f'checksum mismatch for {name}; delete it and download again')
+    print(f'Joining {len(parts)} parts into {os.path.basename(zpath)}')
+    with open(zpath + '.tmp', 'wb') as out:
+        for p in parts:
+            with open(p, 'rb') as f:
+                while block := f.read(1 << 20):
+                    out.write(block)
+    os.replace(zpath + '.tmp', zpath)
+
+
 def fetch_from_zenodo(record, dest_dir):
     meta = requests.get(f'https://zenodo.org/api/records/{record}', timeout=60)
     meta.raise_for_status()
     files = {f['key']: f for f in meta.json()['files']}
-    for name in (ZIP_NAME, SUMS_NAME):
+    parts = [] if ZIP_NAME in files else sorted(k for k in files if is_part(k))
+    for name in [SUMS_NAME] + (parts or [ZIP_NAME]):
         if name not in files:
             sys.exit(f'{name} not found in Zenodo record {record}')
         dest = os.path.join(dest_dir, name)
@@ -57,7 +81,10 @@ def fetch_from_zenodo(record, dest_dir):
             continue
         print(f'Downloading {name}')
         download(files[name]['links']['self'], dest)
-    return os.path.join(dest_dir, ZIP_NAME), os.path.join(dest_dir, SUMS_NAME)
+    zpath, spath = os.path.join(dest_dir, ZIP_NAME), os.path.join(dest_dir, SUMS_NAME)
+    if parts:
+        join_parts([os.path.join(dest_dir, p) for p in parts], zpath, read_sums(spath))
+    return zpath, spath
 
 
 def read_sums(path):
@@ -87,6 +114,11 @@ def main():
         ap.error('give --record <id> or --zip <path>')
 
     sums = read_sums(spath) if os.path.exists(spath) else {}
+    if is_part(os.path.basename(zpath)):
+        base = zpath[:-4]
+        parts = sorted(p for p in glob.glob(glob.escape(base) + '.*') if is_part(os.path.basename(p)))
+        join_parts(parts, base, sums)
+        zpath = base
     if not sums:
         print(f'warning: {SUMS_NAME} not found; skipping checksum verification')
     elif sums.get(os.path.basename(zpath)) not in (None, sha256(zpath)):

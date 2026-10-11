@@ -10,8 +10,8 @@ cross-fitted ridge probes and bootstrap intervals.
 
 | Item | Location |
 |---|---|
-| Code (this repository) | [https://github.com/balajeekalyan/emotion-aware-music-retrieval](https://github.com/balajeekalyan/emotion-aware-music-retrieval) — archived at Zenodo, DOI [AUTHOR: code DOI] |
-| Outputs: embeddings, per-query results, tables, figures | Zenodo, DOI [AUTHOR: data DOI] |
+| Code (this repository) | [https://github.com/balajeekalyan/emotion-aware-music-retrieval](https://github.com/balajeekalyan/emotion-aware-music-retrieval) — archived at Zenodo, DOI [10.5281/zenodo.23273416](https://doi.org/10.5281/zenodo.23273416) |
+| Outputs: embeddings, per-query results, tables, figures | Zenodo, DOI [10.5281/zenodo.23275462](https://doi.org/10.5281/zenodo.23275462) (CC BY-NC 4.0) |
 | MERGE dataset (audio, lyrics, AV annotations, splits) | Zenodo, DOI [10.5281/zenodo.13939205](https://doi.org/10.5281/zenodo.13939205) (third-party; not redistributed) |
 
 ## Repository layout
@@ -48,8 +48,9 @@ outputs/                 from our Zenodo record (python download_data.py), or re
 1. **MERGE.** Download `MERGE_Audio_Balanced` and `MERGE_Lyrics_Balanced` from Zenodo and unpack them here. MERGE is
    licensed CC BY-NC 4.0. Every evaluation notebook reads MERGE's train/val/test split files
    (`tvt_dataframes/`), so you need MERGE even if you only re-run the evaluation.
-2. **Outputs.** Run `python download_data.py --record <ZENODO_RECORD_ID>`, or pass `--zip <path>` for a zip you
-   downloaded by hand. The script checks SHA-256 checksums and unpacks into `outputs/`.
+2. **Outputs.** Run `python download_data.py` (Zenodo record 23275462), or pass `--zip <path>` for a zip you
+   downloaded by hand (or `--zip <path>.001` for its 25 MB parts, which the script joins). The script checks SHA-256
+   checksums and unpacks into `outputs/`.
 
 The published `outputs/merged_dataset.parquet` **does not include lyric text** (it is copyrighted). Notebooks that
 need it (`phase3_lyrics_features`, `phase3b_text_encoders`, `phase5g_lyrics_chunking`) require the full table, which
@@ -111,7 +112,7 @@ Configuration choices (layer, preprocessing, fusion weight) are made on the vali
 
 MuQ and MERT are released under CC BY-NC 4.0.
 
-## Licence
+## License
 
 The code is MIT-licensed (see `LICENSE`). The outputs on Zenodo are CC BY-NC 4.0 because they are derived from MERGE.
 
