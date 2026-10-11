@@ -3,8 +3,9 @@ message: "If you use this code, please cite the paper and the MERGE dataset."
 title: "Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Modal Coherence (code)"
 type: software
 license: MIT
-version: "2.0"
-date-released: "2026-10-10"   # update to the release date
+version: "1.0.2"
+date-released: "2026-10-11"
+doi: "10.5281/zenodo.23273415"
 authors:
   - family-names: Kalyanasundaram
     given-names: Balajee
