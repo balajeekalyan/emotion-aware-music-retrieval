@@ -12,7 +12,7 @@ coherence** with cross-fitted ridge probes and bootstrap intervals, and test how
 | Item | Location |
 |---|---|
 | Code (this repository) | [https://github.com/balajeekalyan/emotion-aware-music-retrieval](https://github.com/balajeekalyan/emotion-aware-music-retrieval) — archived at Zenodo, DOI [10.5281/zenodo.23273415](https://doi.org/10.5281/zenodo.23273415) (all versions) |
-| Outputs: embeddings, per-query results, tables, figures | Zenodo, DOI [10.5281/zenodo.23275462](https://doi.org/10.5281/zenodo.23275462) (CC BY-NC 4.0) |
+| Outputs: embeddings, per-query results, tables, figures | Zenodo, version 3: DOI [10.5281/zenodo.23356279](https://doi.org/10.5281/zenodo.23356279); all versions: DOI [10.5281/zenodo.23275461](https://doi.org/10.5281/zenodo.23275461) (CC BY-NC 4.0) |
 | MERGE dataset (audio, lyrics, AV annotations, splits) | Zenodo, DOI [10.5281/zenodo.13939205](https://doi.org/10.5281/zenodo.13939205) (third-party; not redistributed) |
 
 ## Repository layout
