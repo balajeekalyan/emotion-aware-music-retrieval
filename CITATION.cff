@@ -1,10 +1,10 @@
 cff-version: 1.2.0
 message: "If you use this code, please cite the paper and the MERGE dataset."
-title: "Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Modal Coherence (code)"
+title: "Emotion-Aware Music Retrieval from Audio and Lyrics: Encoder Choice, Fusion, and Cross-Modal Coherence (code)"
 type: software
 license: MIT
-version: "1.0.2"
-date-released: "2026-10-11"
+version: "1.0.3"
+date-released: "2026-10-13"
 doi: "10.5281/zenodo.23273415"
 authors:
   - family-names: Kalyanasundaram

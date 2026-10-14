@@ -18,11 +18,18 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 ORDER = [
     'phase1_data_alignment',
     'phase2_audio_features', 'phase2b_clap_deterministic', 'phase2c_mert_muq',
+    'phase2d_clap_zero_shot', 'phase2e_clap_checkpoint_check',
     'phase3_lyrics_features', 'phase3b_text_encoders',
-    'phase4_similarity_engine', 'phase4b_coherence_rigor', 'phase4c_coherence_muq',
+    'phase4_similarity_engine', 'phase4b_coherence_rigor', 'phase4c_coherence_muq', 'phase4d_coherence_artist_folds',
     'phase5_evaluation', 'phase5b_shared_split_stats', 'phase5c_graded_relevance', 'phase5d_clap_det_comparison',
     'phase5e_encoder_comparison', 'phase5f_main_results', 'phase5g_lyrics_chunking', 'phase5h_relevance_sensitivity',
-    'phase6_visualization', 'phase6b_embedding_structure', 'phase6c_paradox_gallery',
+    'phase5i_artist_filtered', 'phase5j_artist_primary', 'phase5k_supervised_baseline', 'phase5l_coherence_checks',
+    'phase5m_encoder_comparison_artist', 'phase5n_coherence_retrieval_af', 'phase5o_coherence_checks_af',
+    'phase6_visualization', 'phase6b_embedding_structure', 'phase6c_paradox_gallery', 'phase6d_paradox_gallery_af',
+    # CLAP = laion/larger_clap_general (needs outputs/audio_features_clap_general.parquet from extract_clap_general.py)
+    'phase5p_clap_general',
+    'phase4d_coherence_artist_folds_cg', 'phase5i_artist_filtered_cg', 'phase5j_artist_primary_cg',
+    'phase5m_encoder_comparison_artist_cg', 'phase6b_embedding_structure_cg', 'phase6d_paradox_gallery_af_cg',
 ]
 
 

@@ -1,11 +1,15 @@
 """Download the released outputs from Zenodo, verify their checksums and unpack them into outputs/.
 
-    python download_data.py --record <ZENODO_RECORD_ID>      # e.g. the number in zenodo.org/records/<id>
+    python download_data.py                                  # latest version of the outputs record
+    python download_data.py --record <ZENODO_RECORD_ID> --exact   # exactly that version
     python download_data.py --zip path/to/merge_emotion_retrieval_outputs_v2.zip   # already downloaded
     python download_data.py --zip path/to/merge_emotion_retrieval_outputs_v2.zip.001   # parts, joined first
 
-The Zenodo record holds the zip as ~25 MB parts (<zip>.001, <zip>.002, ...); they are checked and joined into the zip
-before it is unpacked. Existing files in outputs/ are not overwritten unless --force is given.
+The Zenodo record holds the main zip as ~25 MB parts (<zip>.001, <zip>.002, ...); they are checked and joined into the
+zip before it is unpacked. From version 3 of the record, a second zip (45 MB), merge_emotion_retrieval_outputs_v3_additions.zip,
+holds the outputs added for the revised paper (artist-filtered results, supervised reference, coherence checks, working CLAP); it is
+unpacked after the main zip. With --zip, an additions zip lying next to the main zip is used too (or pass --additions).
+Existing files in outputs/ are not overwritten unless --force is given.
 """
 import argparse
 import glob
@@ -19,8 +23,9 @@ import requests
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 ZIP_NAME = 'merge_emotion_retrieval_outputs_v2.zip'
+ADDON_NAME = 'merge_emotion_retrieval_outputs_v3_additions.zip'
 SUMS_NAME = 'SHA256SUMS.txt'
-ZENODO_RECORD = '23275462'   # DOI 10.5281/zenodo.23275462; --record overrides it
+ZENODO_RECORD = '23275462'   # DOI 10.5281/zenodo.23275462 (v2); without --exact, the latest version is used
 
 
 def sha256(path):
@@ -65,14 +70,18 @@ def join_parts(parts, zpath, sums):
     os.replace(zpath + '.tmp', zpath)
 
 
-def fetch_from_zenodo(record, dest_dir):
-    meta = requests.get(f'https://zenodo.org/api/records/{record}', timeout=60)
+def fetch_from_zenodo(record, dest_dir, exact):
+    url = f'https://zenodo.org/api/records/{record}' + ('' if exact else '/versions/latest')
+    meta = requests.get(url, timeout=60)
     meta.raise_for_status()
-    files = {f['key']: f for f in meta.json()['files']}
+    meta = meta.json()
+    print(f'Zenodo record {meta["id"]}' + ('' if exact else f' (latest version of {record})'))
+    files = {f['key']: f for f in meta['files']}
     parts = [] if ZIP_NAME in files else sorted(k for k in files if is_part(k))
-    for name in [SUMS_NAME] + (parts or [ZIP_NAME]):
+    wanted = [SUMS_NAME] + (parts or [ZIP_NAME]) + ([ADDON_NAME] if ADDON_NAME in files else [])
+    for name in wanted:
         if name not in files:
-            sys.exit(f'{name} not found in Zenodo record {record}')
+            sys.exit(f'{name} not found in Zenodo record {meta["id"]}')
         dest = os.path.join(dest_dir, name)
         expected = files[name].get('checksum', '')            # "md5:..."
         if os.path.exists(dest) and expected.startswith('md5:') and \
@@ -84,7 +93,8 @@ def fetch_from_zenodo(record, dest_dir):
     zpath, spath = os.path.join(dest_dir, ZIP_NAME), os.path.join(dest_dir, SUMS_NAME)
     if parts:
         join_parts([os.path.join(dest_dir, p) for p in parts], zpath, read_sums(spath))
-    return zpath, spath
+    apath = os.path.join(dest_dir, ADDON_NAME) if ADDON_NAME in files else None
+    return zpath, spath, apath
 
 
 def read_sums(path):
@@ -97,33 +107,12 @@ def read_sums(path):
     return sums
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument('--record', default=ZENODO_RECORD, help='Zenodo record id')
-    ap.add_argument('--zip', help='local copy of the outputs zip (skips the download)')
-    ap.add_argument('--sums', help=f'local {SUMS_NAME} (default: next to the zip)')
-    ap.add_argument('--force', action='store_true', help='overwrite existing files in outputs/')
-    args = ap.parse_args()
-
-    if args.zip:
-        zpath = args.zip
-        spath = args.sums or os.path.join(os.path.dirname(os.path.abspath(zpath)), SUMS_NAME)
-    elif args.record:
-        zpath, spath = fetch_from_zenodo(args.record, ROOT)
-    else:
-        ap.error('give --record <id> or --zip <path>')
-
-    sums = read_sums(spath) if os.path.exists(spath) else {}
-    if is_part(os.path.basename(zpath)):
-        base = zpath[:-4]
-        parts = sorted(p for p in glob.glob(glob.escape(base) + '.*') if is_part(os.path.basename(p)))
-        join_parts(parts, base, sums)
-        zpath = base
+def unpack(zpath, sums, force):
+    """Unpack one zip into outputs/, checking every file listed in SHA256SUMS."""
     if not sums:
         print(f'warning: {SUMS_NAME} not found; skipping checksum verification')
     elif sums.get(os.path.basename(zpath)) not in (None, sha256(zpath)):
         sys.exit(f'checksum mismatch for {zpath}; delete it and download again')
-
     written = kept = 0
     with zipfile.ZipFile(zpath) as z:
         for info in z.infolist():
@@ -133,7 +122,7 @@ def main():
             if not name.startswith('outputs/') or '..' in name.split('/'):
                 sys.exit(f'unexpected path in zip: {name}')
             dest = os.path.join(ROOT, *name.split('/'))
-            if os.path.exists(dest) and not args.force:
+            if os.path.exists(dest) and not force:
                 kept += 1
                 continue
             os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -143,7 +132,40 @@ def main():
             if name in sums and sha256(dest) != sums[name]:
                 sys.exit(f'checksum mismatch for {name}')
             written += 1
-    print(f'Unpacked {written} files into outputs/' + (f'; kept {kept} existing (use --force to replace)' if kept else ''))
+    print(f'{os.path.basename(zpath)}: unpacked {written} files into outputs/'
+          + (f'; kept {kept} existing (use --force to replace)' if kept else ''))
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--record', default=ZENODO_RECORD, help='Zenodo record id')
+    ap.add_argument('--exact', action='store_true', help='use exactly --record, not its latest version')
+    ap.add_argument('--zip', help='local copy of the outputs zip (skips the download)')
+    ap.add_argument('--additions', help=f'local copy of {ADDON_NAME} (default: next to --zip, if present)')
+    ap.add_argument('--sums', help=f'local {SUMS_NAME} (default: next to the zip)')
+    ap.add_argument('--force', action='store_true', help='overwrite existing files in outputs/')
+    args = ap.parse_args()
+
+    if args.zip:
+        zpath = args.zip
+        folder = os.path.dirname(os.path.abspath(zpath))
+        spath = args.sums or os.path.join(folder, SUMS_NAME)
+        apath = args.additions or (os.path.join(folder, ADDON_NAME)
+                                   if os.path.exists(os.path.join(folder, ADDON_NAME)) else None)
+    elif args.record:
+        zpath, spath, apath = fetch_from_zenodo(args.record, ROOT, args.exact)
+    else:
+        ap.error('give --record <id> or --zip <path>')
+
+    sums = read_sums(spath) if os.path.exists(spath) else {}
+    if is_part(os.path.basename(zpath)):
+        base = zpath[:-4]
+        parts = sorted(p for p in glob.glob(glob.escape(base) + '.*') if is_part(os.path.basename(p)))
+        join_parts(parts, base, sums)
+        zpath = base
+    unpack(zpath, sums, args.force)
+    if apath:
+        unpack(apath, sums, args.force)
 
 
 if __name__ == '__main__':

@@ -1,12 +1,13 @@
-# Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Modal Coherence
+# Emotion-Aware Music Retrieval from Audio and Lyrics: Encoder Choice, Fusion, and Cross-Modal Coherence
 
-Code for the paper *Do Audio and Lyrics Agree? Emotion-Aware Music Retrieval with Cross-Modal Coherence*
+Code for the paper *Emotion-Aware Music Retrieval from Audio and Lyrics: Encoder Choice, Fusion, and Cross-Modal Coherence*
 (Kalyanasundaram, PeerJ Computer Science, under review).
 
 Given a query track, we rank a catalog of 2,075 tracks from the MERGE dataset using **content alone**: audio
-embeddings (MuQ, MERT, CLAP, handcrafted), lyric embeddings (SBERT and others), or a fusion of the two. Retrieval is
-scored against the tracks' arousal–valence (AV) annotations. We also measure per-track **audio–lyrics coherence** with
-cross-fitted ridge probes and bootstrap intervals.
+embeddings (MuQ, MERT, CLAP, handcrafted), lyric embeddings (SBERT and others), or a fusion of the two, with tracks by
+the query's artist excluded from every ranking. Retrieval is scored against MERGE's quadrant labels and arousal–valence
+(AV) values. A supervised reference retrieves by predicted emotion. We also measure per-track **audio–lyrics
+coherence** with cross-fitted ridge probes and bootstrap intervals, and test how useful it is as a reliability signal.
 
 | Item | Location |
 |---|---|
@@ -19,6 +20,8 @@ cross-fitted ridge probes and bootstrap intervals.
 ```
 phase*.ipynb                 analysis notebooks, run in the order below
 extract_audio_encoders.py    memory-bounded MERT / MuQ extraction with checkpoint and resume
+extract_clap_general.py      CLAP (laion/larger_clap_general) extraction with checkpoint and resume
+check_laion_clap_music.py    original LAION CLAP music checkpoint vs its Hugging Face conversion (own environment)
 run_notebooks.py             headless runner (nbclient)
 download_data.py             fetch and unpack the outputs from Zenodo into outputs/
 ```
@@ -48,9 +51,13 @@ outputs/                 from our Zenodo record (python download_data.py), or re
 1. **MERGE.** Download `MERGE_Audio_Balanced` and `MERGE_Lyrics_Balanced` from Zenodo and unpack them here. MERGE is
    licensed CC BY-NC 4.0. Every evaluation notebook reads MERGE's train/val/test split files
    (`tvt_dataframes/`), so you need MERGE even if you only re-run the evaluation.
-2. **Outputs.** Run `python download_data.py` (Zenodo record 23275462), or pass `--zip <path>` for a zip you
-   downloaded by hand (or `--zip <path>.001` for its 25 MB parts, which the script joins). The script checks SHA-256
-   checksums and unpacks into `outputs/`.
+2. **Outputs.** Run `python download_data.py`, which fetches the latest version of the outputs record (Zenodo
+   23275462 and later versions), or pass `--zip <path>` for a zip you downloaded by hand (or `--zip <path>.001` for its
+   25 MB parts, which the script joins). From version 3, the record also holds a 45 MB
+   `merge_emotion_retrieval_outputs_v3_additions.zip` with the outputs added for the revised paper (`phase2d`, `phase2e`,
+   `phase4d`, `phase5i`–`phase5p`, `phase6d`, the `_cg` notebooks and the CLAP scripts); the script unpacks it
+   after the main zip (with `--zip`, put it in the same folder). The script checks SHA-256 checksums and unpacks into
+   `outputs/`.
 
 The published `outputs/merged_dataset.parquet` **does not include lyric text** (it is copyrighted). Notebooks that
 need it (`phase3_lyrics_features`, `phase3b_text_encoders`, `phase5g_lyrics_chunking`) require the full table, which
@@ -67,6 +74,7 @@ There are two ways to reproduce the paper:
 
   ```bash
   python extract_audio_encoders.py muq --max-tracks 300    # repeat until it exits with code 0
+  python extract_clap_general.py --max-tracks 300          # CLAP for the *_cg notebooks; same pattern
   ```
 
 ```bash
@@ -80,25 +88,45 @@ python run_notebooks.py phase5f_main_results    # one notebook
 | 2 | `phase2_audio_features` | handcrafted + CLAP (v1, random crop) | Table S1 |
 | 2b | `phase2b_clap_deterministic` | CLAP, three fixed 10-s windows | |
 | 2c | `phase2c_mert_muq` (or `extract_audio_encoders.py`) | `encoders/audio_muq.npy`, `audio_mert.npy` (all layers) | |
+| 2d | `phase2d_clap_zero_shot` | zero-shot check that exposes the defective HF `laion/larger_clap_music` conversion | |
+| 2e | `phase2e_clap_checkpoint_check` | HF CLAP checkpoints compared on training tracks only → `laion/larger_clap_general` | Table S11a |
+| – | `extract_clap_general.py` | `audio_features_clap_general.parquet` (CLAP used in the paper) | |
+| – | `check_laion_clap_music.py` | original LAION music checkpoint vs its HF conversion (separate `laion_clap` environment; see the script) | Table S11a |
 | 3 | `phase3_lyrics_features` | SBERT (truncated), NRC, VADER | |
 | 3b | `phase3b_text_encoders` | chunked MPNet / MiniLM / BGE, emotion DistilRoBERTa, lexicon | |
 | 4 | `phase4_similarity_engine` | v1 (CLAP) indices and coherence; superseded | |
 | 4b | `phase4b_coherence_rigor` | cross-fitted coherence, CLAP probe | |
-| 4c | `phase4c_coherence_muq` | cross-fitted coherence, MuQ L7 probe; confound check | Fig 7, Table 4, Table S7a |
+| 4c | `phase4c_coherence_muq` | cross-fitted coherence, MuQ L7 probe; confound check (folds stratified by quadrant) | |
+| 4d | `phase4d_coherence_artist_folds` | coherence with folds grouped by artist (`*_af`), all probe variants | Table S6b, S7a, S10e, S10g |
 | 5 | `phase5_evaluation` | v1 evaluation; superseded | |
 | 5b | `phase5b_shared_split_stats` | shared splits, paired tests (CLAP) | |
 | 5c | `phase5c_graded_relevance` | nDCG, AV-threshold relevance (CLAP) | |
 | 5d | `phase5d_clap_det_comparison` | random vs deterministic CLAP | |
-| 5e | `phase5e_encoder_comparison` | all encoders, layer sweeps, probes, fusion grid | Fig 3, Table 3, Table S5 |
-| 5f | `phase5f_main_results` | **main results** (MuQ + SBERT) | Figs 4, 5, 8, Table 2, Tables S2, S3, S7b–c |
+| 5e | `phase5e_encoder_comparison` | all encoders, layer sweeps, probes, fusion grid (same-artist tracks kept) | Table 3 probes |
+| 5f | `phase5f_main_results` | main results, MuQ + SBERT (same-artist tracks kept); near-duplicate pairs | Table S7b |
 | 5g | `phase5g_lyrics_chunking` | truncated vs chunked lyrics | Table S6 |
-| 5h | `phase5h_relevance_sensitivity` | σ / τ sensitivity | Table S4 |
+| 5h | `phase5h_relevance_sensitivity` | σ / τ sensitivity (same-artist tracks kept) | |
+| 5i | `phase5i_artist_filtered` | same-artist neighbors: share of top 10, filtered vs unfiltered, artist-cluster bootstrap | |
+| 5j | `phase5j_artist_primary` | **main results (primary, artist-filtered)**: 5f + 5h + coherence–retrieval | |
+| 5k | `phase5k_supervised_baseline` | supervised reference: retrieval by predicted AV / quadrant, hybrid | Table S9 |
+| 5l | `phase5l_coherence_checks` | coherence as a reliability signal: probe-error control, simpler signals, selective retrieval | |
+| 5m | `phase5m_encoder_comparison_artist` | 5e under the artist-filtered protocol | |
+| 5n | `phase5n_coherence_retrieval_af` | coherence–retrieval analysis with artist-grouped coherence folds | Fig 8 |
+| 5o | `phase5o_coherence_checks_af` | 5l with artist-grouped coherence folds | Fig 10, Table S10a–d |
 | 6 | `phase6_visualization` | v1 figures; superseded | |
 | 6b | `phase6b_embedding_structure` | silhouette with permutation null, linear probes | Fig 6 |
-| 6c | `phase6c_paradox_gallery` | robust paradoxes under both audio encoders | Fig 9 |
+| 6c | `phase6c_paradox_gallery` | robust paradoxes under both audio encoders (quadrant-stratified folds) | |
+| 6d | `phase6d_paradox_gallery_af` | 6c with artist-grouped coherence folds | |
+| 5p | `phase5p_clap_general` | CLAP (`larger_clap_general`) vs MuQ, MERT, SBERT and the defective CLAP: retrieval, tests, fusion, probes | Table S11b–c |
+| `_cg` | `phase4d_…_cg`, `phase5i_…_cg`, `phase5j_…_cg`, `phase5m_…_cg`, `phase6b_…_cg`, `phase6d_…_af_cg` | copies of those notebooks with CLAP = `larger_clap_general` (`*_cg` outputs; MuQ, MERT and SBERT values are unchanged) | Tables 2–4, Figs 3–7, 9, Tables S2–S5, S7c, S8, S10f |
 
-The notebooks are left as they were for the review, including the superseded v1 (CLAP) analyses (phases 4, 5, 6).
-Configuration choices (layer, preprocessing, fusion weight) are made on the validation split only.
+The notebooks are left as they were for the review, including the superseded v1 (CLAP) analyses (phases 4, 5, 6),
+the analyses without the same-artist exclusion (5e, 5f, 5h), which 5i–5m extend, the quadrant-stratified coherence
+folds (4c, 5l, 6c), which 4d, 5n, 5o and 6d replace with artist-grouped folds, and the analyses with the defective
+`larger_clap_music` conversion, which the `_cg` copies repeat with `larger_clap_general`. New analyses write new files
+(`*_artist`, `*_af`, `*_cg`, `supervised_baseline_*`, `coherence_checks_*`, `clap_general_*`) and never overwrite
+earlier ones. `run_notebooks.py` runs the `_cg` copies last. Configuration choices
+(layer, preprocessing, fusion weight) are made on the validation split only.
 
 ## Models
 
@@ -106,7 +134,8 @@ Configuration choices (layer, preprocessing, fusion weight) are made on the vali
 |---|---|
 | `OpenMuQ/MuQ-large-msd-iter` | `0562a578` |
 | `m-a-p/MERT-v1-95M` | `12af15fe` |
-| `laion/larger_clap_music` | |
+| `laion/larger_clap_general` | `ada0c23a` (CLAP in the paper) |
+| `laion/larger_clap_music` | defective HF conversion; earlier analyses only |
 | `sentence-transformers/all-mpnet-base-v2` | |
 | `j-hartmann/emotion-english-distilroberta-base` | |
 
