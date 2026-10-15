@@ -3,8 +3,8 @@ message: "If you use this code, please cite the paper and the MERGE dataset."
 title: "Emotion-Aware Music Retrieval from Audio and Lyrics: Encoder Choice, Fusion, and Cross-Modal Coherence (code)"
 type: software
 license: MIT
-version: "1.0.3"
-date-released: "2026-10-13"
+version: "1.0.4"
+date-released: "2026-10-14"
 doi: "10.5281/zenodo.23273415"
 authors:
   - family-names: Kalyanasundaram
